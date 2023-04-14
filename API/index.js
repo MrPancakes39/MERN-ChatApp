@@ -1,6 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const cookieParser = require("cookie-parser"); //cookie ia a piece of data that a server sends in the http response
+// const cookieParser = require("cookie-parser"); //cookie ia a piece of data that a server sends in the http response
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
 const cors = require("cors"); // refers to the situations when a frontend running in a browser has JS code that communicates with a backend and backend has different origin than the frontend
@@ -21,15 +21,10 @@ const jwtSecret = process.env.JWT_SECRET;
 const bcryptSalt = bcrypt.genSaltSync(10);
 
 const app = express();
-app.use("/uploads", express, static(__dirname + "/uploads"));
+app.use(cors());
+app.use("/uploads", express.static(__dirname + "/uploads"));
 app.use(express.json());
-app.use(cookieParser());
-app.use(
-    cors({
-        credentials: true,
-        origin: process.env.CLIENT_URL,
-    })
-);
+// app.use(cookieParser());
 
 async function getUserDataFromRequest(req) {
     return new Promise((resolve, reject) => {
@@ -86,17 +81,19 @@ app.post("/login", async (req, res) => {
                 jwtSecret,
                 {}
             );
-            res.cookie("token", token, { sameSite: "none", secure: true }).json(
-                {
+            return res
+                .cookie("token", token, { sameSite: "none", secure: true })
+                .json({
                     id: foundUser._id,
-                }
-            );
+                });
         }
     }
 });
 
 app.post("/logout", (req, res) => {
-    res.cookie("token", "", { sameSite: "none", secure: true }).json("ok");
+    return res
+        .cookie("token", "", { sameSite: "none", secure: true })
+        .json("ok");
 });
 
 app.post("/register", async (req, res) => {
@@ -117,14 +114,15 @@ app.post("/register", async (req, res) => {
             {}
         );
         console.log(token);
-        res.cookie("token", token, { sameSite: "none", secure: false })
+        return res
+            .cookie("token", token, { sameSite: "none", secure: false })
             .status(201)
             .json({
                 id: createdUser._id,
             });
     } catch (err) {
-        res.status(500).json("error");
         console.error(err);
+        return res.status(500).json("error");
     }
 });
 

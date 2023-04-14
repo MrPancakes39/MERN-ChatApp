@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react"; //tp avoid the unwanted side effects of the class components
+import { useEffect, useState, useRef } from "react"; //tp avoid the unwanted side effects of the class components
 import Avatar from "./Avatar";
 import Logo from "./Logo";
 import { useContext } from "react";
-import { UserContext, id } from "./UserContext";
-import { uniqueBy } from "loadash";
-import { off } from "./Message";
+import { UserContext } from "./UserContext";
+import {uniqBy} from "lodash";
 import Contact from "./Contact";
 import axios from "axios";
 
@@ -55,7 +54,7 @@ export default function Chat() {
     }
 
     function logout() {
-        axios.post('/logout').then(() => {
+        axios.post('http://localhost:4040/logout').then(() => {
             setWs(null); //kill the connection 
             setId(null);
             setUsername(null);
@@ -75,7 +74,7 @@ export default function Chat() {
             }
         }));
         if (file) {
-            axios.get('/messages/' + selectedUserId).then(res => {
+            axios.get('http://localhost:4040/messages/' + selectedUserId).then(res => {
                 setMessages(res.data);
             });
         } else {
@@ -101,13 +100,13 @@ export default function Chat() {
     }
 
     useEffect(() => { //will grab all people from our database and then filter out the online people to know the offline users
-        axios.get('/people').then(res => {
+        axios.get('http://localhost:4040/people').then(res => {
             const offlinePeopleArr = res.data
                 .filter(p => p._id !== id)
                 .filter(p => !Object.keys(onlinePeople).includes(p._id)); //will return only the ids of the loggedin users
             const offlinePeople = {};
             offlinePeopleArr.forEach(p => {
-                offlinePeople(p._id) = p;
+                offlinePeople[p._id] = p;
             });
             setOfflinePeople(offlinePeople);
             //console.log(offlinePeople);
@@ -123,7 +122,7 @@ export default function Chat() {
 
     useEffect(() => {
         if (selectedUserId) {
-            axios.get('/messages/' + selectedUserId).then(res => {
+            axios.get('http://localhost:4040/messages/' + selectedUserId).then(res => {
                 setMessages(res.data);
             });
         }
@@ -134,7 +133,7 @@ export default function Chat() {
     //keys are the userIds
     // !! converts to boolean
 
-    const messagesWithoutDupes = uniqueBy(messages, '_id'); //not to duplicate the message sent
+    const messagesWithoutDupes = uniqBy(messages, '_id'); //not to duplicate the message sent
 
     return (
         <div className="flex h-screen">
@@ -193,7 +192,7 @@ export default function Chat() {
                                                 {message.text}
                                                 {message.file && (
                                                     <div className="flex items-center gap-1 underline">
-                                                        <a target="_blank" className="flex items-center gap-1 border-b" href={axios.defaults.baseURL + '/' + '/uploads/'}>
+                                                        <a target="_blank" className="flex items-center gap-1 border-b" href={'http://localhost:4040/uploads/'}>
                                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
                                                                 <path fillRule="evenodd" d="M18.97 3.659a2.25 2.25 0 00-3.182 0l-10.94 10.94a3.75 3.75 0 105.304 5.303l7.693-7.693a.75.75 0 011.06 1.06l-7.693 7.693a5.25 5.25 0 11-7.424-7.424l10.939-10.94a3.75 3.75 0 115.303 5.304L9.097 18.835l-.008.008-.007.007-.002.002-.003.002A2.25 2.25 0 015.91 15.66l7.81-7.81a.75.75 0 011.061 1.06l-7.81 7.81a.75.75 0 001.054 1.068L18.97 6.84a2.25 2.25 0 000-3.182z" clipRule="evenodd" />
                                                             </svg>
